@@ -75,7 +75,7 @@ type School struct {
 	ID            string    `json:"id"`
 	Name          string    `json:"name"`
 	Activated     bool      `json:"activated"`
-	ShortName     string    `json:"apogee_internal_short_name"`
+	ShortName     string    `json:"apogee_short_internal_name"`
 	ActivatedDate time.Time `json:"activated_timestamp"`
 }
 
