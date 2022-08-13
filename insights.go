@@ -89,7 +89,6 @@ func (s *Service) GetSchools() ([]School, error) {
 	q.Add("limit", "20")
 	q.Add("activated_status", "active")
 	req.URL.RawQuery = q.Encode()
-	fmt.Println(req)
 	res, err := s.makeRequest(req)
 	if err != nil {
 		return nil, err
@@ -201,7 +200,10 @@ func (s *Service) BulkSyncAps(schoolID string, aps []SyncAp) (bool, error) {
 		}
 		results = append(results, p)
 	}
-	var success bool
+	success := true
+	if len(results) == 0 {
+		success = false
+	}
 	for _, sync := range results {
 		if !sync {
 			success = false
