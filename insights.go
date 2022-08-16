@@ -143,10 +143,10 @@ type GetAccessPointsResp struct {
 }
 
 type SyncAp struct {
-	Name    string `json:"name"`
-	MacAddr string `json:"mac_address"`
-	Serial  string `json:"serial"`
-	Switch  string `json:"switch"`
+	Name    string   `json:"name"`
+	MacAddr []string `json:"mac_addresses"`
+	Serial  string   `json:"serial"`
+	Switch  string   `json:"switch"`
 }
 
 // SyncAps synchronizes accesspoints to the DA DB
