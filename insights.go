@@ -212,3 +212,68 @@ func (s *Service) BulkSyncAps(schoolID string, aps []SyncAp) (bool, error) {
 	}
 	return success, nil
 }
+
+type SwitchStatus struct {
+	OrgName string `json:"apogee_short_internal_name"`
+	// Options are:
+	// 0 - DOWN
+	// 1 - UP
+	Status int    `json:"status"`
+	Name   string `json:"name"`
+}
+
+type SwitchesResp struct {
+	ID               string    `json:"id"`
+	Name             string    `json:"name"`
+	CreateAt         time.Time `json:"created_timestamp"`
+	UpdatedAt        time.Time `json:"updated_timestamp"`
+	LastHeartBeat    time.Time `json:"last_heartbeat_timestamp"`
+	Status           int       `json:"status"`
+	AccessPointCount int       `json:"number_of_access_points"`
+}
+
+func (s *Service) GetSwitchesBySchool(schoolID string) ([]SwitchesResp, error) {
+	var switches []SwitchesResp
+	req, err := s.generateRequest(fmt.Sprintf("/schools/%s/switches", schoolID), "GET", nil)
+	if err != nil {
+		return switches, err
+	}
+	res, err := s.makeRequest(req)
+	if err != nil {
+		return switches, err
+	}
+	defer res.Body.Close()
+	resp := struct {
+		Data []SwitchesResp `json:"data"`
+	}{}
+	if err = json.NewDecoder(res.Body).Decode(&resp); err != nil {
+		return switches, err
+	}
+	return resp.Data, nil
+}
+
+func (s *Service) SendSwitchStatus(swStatus SwitchStatus) (SwitchesResp, error) {
+	var statusResp SwitchesResp
+	data, _ := json.Marshal(swStatus)
+	payload := strings.NewReader(string(data))
+	req, err := s.generateRequest(
+		"/switches/sync",
+		"POST",
+		payload,
+	)
+	if err != nil {
+		return statusResp, err
+	}
+	res, err := s.makeRequest(req)
+	if err != nil {
+		return statusResp, err
+	}
+	defer res.Body.Close()
+	resp := struct {
+		Data SwitchesResp `json:"data"`
+	}{}
+	if err = json.NewDecoder(res.Body).Decode(&resp); err != nil {
+		return statusResp, err
+	}
+	return resp.Data, nil
+}
