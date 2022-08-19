@@ -79,7 +79,11 @@ type School struct {
 	ActivatedDate time.Time `json:"activated_timestamp"`
 }
 
-func (s *Service) GetSchools() ([]School, error) {
+type SchoolParams struct {
+	ShortName string
+}
+
+func (s *Service) GetSchools(p SchoolParams) ([]School, error) {
 	var resp GetSchoolsResp
 	req, err := s.generateRequest("/schools", "GET", nil)
 	if err != nil {
@@ -88,6 +92,9 @@ func (s *Service) GetSchools() ([]School, error) {
 	q := req.URL.Query()
 	q.Add("limit", "20")
 	q.Add("activated_status", "active")
+	if p.ShortName != "" {
+		q.Add("apogee_short_internal_name", p.ShortName)
+	}
 	req.URL.RawQuery = q.Encode()
 	res, err := s.makeRequest(req)
 	if err != nil {
@@ -274,6 +281,34 @@ func (s *Service) SendSwitchStatus(swStatus SwitchStatus) (SwitchesResp, error) 
 	}{}
 	if err = json.NewDecoder(res.Body).Decode(&resp); err != nil {
 		return statusResp, err
+	}
+	return resp.Data, nil
+}
+
+type Error struct {
+	Message   string `json:"message"`
+	Context   string `json:"context"`
+	ShortName string `json:"apogee_internal_short_name"`
+	Severity  string `json:"severity"`
+}
+
+func (s *Service) PostError(e Error) (bool, error) {
+	data, _ := json.Marshal(e)
+	payload := strings.NewReader(string(data))
+	req, err := s.generateRequest("/error", "POST", payload)
+	if err != nil {
+		return false, err
+	}
+	res, err := s.makeRequest(req)
+	if err != nil {
+		return false, err
+	}
+	defer res.Body.Close()
+	resp := struct {
+		Data bool `json:"data"`
+	}{}
+	if err = json.NewDecoder(res.Body).Decode(res.Body); err != nil {
+		return false, err
 	}
 	return resp.Data, nil
 }
