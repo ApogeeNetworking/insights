@@ -1,9 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
-	"github.com/ApogeeNetworking/ciscowireless"
 	"github.com/ApogeeNetworking/insights"
 	"github.com/subosito/gotenv"
 )
@@ -16,36 +16,14 @@ func init() {
 	apiToken = os.Getenv("API_TOKEN")
 }
 
+type JFile struct {
+	Data []insights.AccessPoint `json:"data"`
+}
+
 func main() {
 	da := insights.NewService(baseURL, apiToken, true)
-
-	schoolID := "361439dc-7d9f-4536-9706-acdbd7e1c06a"
-
-	cc := ciscowireless.NewService(
-		"ipAddress",
-		"user",
-		"password",
-		"",
-		true,
-	)
-	apDb, _ := cc.AccessPoints.Get()
-	var daAps []insights.SyncAp
-	for _, ap := range apDb {
-		daAps = append(daAps, insights.SyncAp{
-			Name:    ap.Name,
-			MacAddr: []string{ap.MacAddr},
-			Serial:  ap.Serial,
-			Switch:  "aSwitch",
-		})
-		// if len(daAps) == 100 {
-		// 	syncCount += len(daAps)
-		// 	insert, err := da.SyncAps(schoolID, daAps)
-		// 	if err != nil {
-		// 		log.Fatal(err)
-		// 	}
-		// 	fmt.Println(insert)
-		// 	daAps = nil
-		// }
+	swuAps, _ := da.GetAps("dad7d5ed-b3c5-48b3-b676-9a53394abc17")
+	for _, swuAp := range swuAps.Data {
+		fmt.Println(swuAp.Name)
 	}
-	da.BulkSyncAps(schoolID, daAps)
 }

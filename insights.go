@@ -220,6 +220,23 @@ func (s *Service) BulkSyncAps(schoolID string, aps []SyncAp) (bool, error) {
 	return success, nil
 }
 
+func (s *Service) GetAps(schoolID string) (GetAccessPointsResp, error) {
+	var gaps GetAccessPointsResp
+	req, err := s.generateRequest(fmt.Sprintf("/schools/%s/access_points", schoolID), "GET", nil)
+	if err != nil {
+		return gaps, err
+	}
+	res, err := s.makeRequest(req)
+	if err != nil {
+		return gaps, err
+	}
+	defer res.Body.Close()
+	if err = json.NewDecoder(res.Body).Decode(&gaps); err != nil {
+		return gaps, err
+	}
+	return gaps, err
+}
+
 type SwitchStatus struct {
 	OrgName string `json:"apogee_short_internal_name"`
 	// Options are:
