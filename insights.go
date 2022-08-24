@@ -43,7 +43,7 @@ type AuthResp struct {
 func (s *Service) Auth() error {
 	var authRes AuthResp
 	sr, _ := s.createReqBody(&AuthParams{})
-	req, err := s.generateRequest("/auth/", "POST", sr)
+	req, err := s.generateRequest("/auth", "POST", sr)
 	if err != nil {
 		return err
 	}
@@ -85,7 +85,7 @@ type SchoolParams struct {
 
 func (s *Service) GetSchools(p SchoolParams) ([]School, error) {
 	var resp GetSchoolsResp
-	req, err := s.generateRequest("/schools/", "GET", nil)
+	req, err := s.generateRequest("/schools", "GET", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +110,7 @@ func (s *Service) GetSchools(p SchoolParams) ([]School, error) {
 func (s *Service) GetSchool(id string) (School, error) {
 	var resp GetSchoolResp
 	req, err := s.generateRequest(
-		fmt.Sprintf("/schools/%s/", id), "GET", nil,
+		fmt.Sprintf("/schools/%s", id), "GET", nil,
 	)
 	if err != nil {
 		return School{}, err
@@ -167,7 +167,7 @@ func (s *Service) SyncAps(schoolID string, aps []SyncAp) (ApSyncResult, error) {
 	d, _ := json.Marshal(aps)
 	data := strings.NewReader(string(d))
 	req, err := s.generateRequest(
-		fmt.Sprintf("/schools/%s/access_points/sync/", schoolID),
+		fmt.Sprintf("/schools/%s/access_points/sync", schoolID),
 		"POST",
 		data,
 	)
@@ -229,7 +229,7 @@ func (s *Service) BulkSyncAps(schoolID string, aps []SyncAp) (bool, error) {
 
 func (s *Service) GetAps(schoolID string) (GetAccessPointsResp, error) {
 	var gaps GetAccessPointsResp
-	req, err := s.generateRequest(fmt.Sprintf("/schools/%s/access_points/", schoolID), "GET", nil)
+	req, err := s.generateRequest(fmt.Sprintf("/schools/%s/access_points", schoolID), "GET", nil)
 	if err != nil {
 		return gaps, err
 	}
@@ -319,7 +319,7 @@ type Error struct {
 func (s *Service) PostError(e Error) (bool, error) {
 	data, _ := json.Marshal(e)
 	payload := strings.NewReader(string(data))
-	req, err := s.generateRequest("/error/", "POST", payload)
+	req, err := s.generateRequest("/error", "POST", payload)
 	if err != nil {
 		return false, err
 	}
