@@ -212,11 +212,10 @@ func (s *Service) BulkSyncAps(schoolID string, aps []SyncAp) (bool, error) {
 		}
 		results = append(results, p)
 	}
-	success := true
-	if len(results) == 0 {
-		success = false
-	}
-	var totalProcess int
+	var (
+		success      bool
+		totalProcess int
+	)
 	for _, result := range results {
 		totalProcess += result.Processed
 		totalProcess += result.Skipped
