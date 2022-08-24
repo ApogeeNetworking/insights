@@ -43,7 +43,7 @@ type AuthResp struct {
 func (s *Service) Auth() error {
 	var authRes AuthResp
 	sr, _ := s.createReqBody(&AuthParams{})
-	req, err := s.generateRequest("/auth", "POST", sr)
+	req, err := s.generateRequest("/auth/", "POST", sr)
 	if err != nil {
 		return err
 	}
@@ -85,7 +85,7 @@ type SchoolParams struct {
 
 func (s *Service) GetSchools(p SchoolParams) ([]School, error) {
 	var resp GetSchoolsResp
-	req, err := s.generateRequest("/schools", "GET", nil)
+	req, err := s.generateRequest("/schools/", "GET", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +110,7 @@ func (s *Service) GetSchools(p SchoolParams) ([]School, error) {
 func (s *Service) GetSchool(id string) (School, error) {
 	var resp GetSchoolResp
 	req, err := s.generateRequest(
-		fmt.Sprintf("/schools/%s", id), "GET", nil,
+		fmt.Sprintf("/schools/%s/", id), "GET", nil,
 	)
 	if err != nil {
 		return School{}, err
@@ -156,29 +156,34 @@ type SyncAp struct {
 	Switch  string   `json:"switch"`
 }
 
+type ApSyncResult struct {
+	Processed int `json:"number_processed"`
+	Skipped   int `json:"number_skipped"`
+}
+
 // SyncAps synchronizes accesspoints to the DA DB
 // Only allows pushing 100 APs at a time
-func (s *Service) SyncAps(schoolID string, aps []SyncAp) (bool, error) {
+func (s *Service) SyncAps(schoolID string, aps []SyncAp) (ApSyncResult, error) {
 	d, _ := json.Marshal(aps)
 	data := strings.NewReader(string(d))
 	req, err := s.generateRequest(
-		fmt.Sprintf("/schools/%s/access_points/sync", schoolID),
+		fmt.Sprintf("/schools/%s/access_points/sync/", schoolID),
 		"POST",
 		data,
 	)
 	if err != nil {
-		return false, err
+		return ApSyncResult{}, err
 	}
 	res, err := s.makeRequest(req)
 	if err != nil {
-		return false, err
+		return ApSyncResult{}, err
 	}
 	defer res.Body.Close()
 	resp := struct {
-		Data bool `json:"data"`
+		Data ApSyncResult `json:"data"`
 	}{}
 	if err = json.NewDecoder(res.Body).Decode(&resp); err != nil {
-		return false, err
+		return ApSyncResult{}, err
 	}
 	return resp.Data, nil
 }
@@ -186,7 +191,7 @@ func (s *Service) SyncAps(schoolID string, aps []SyncAp) (bool, error) {
 // BulkSyncAps ...
 func (s *Service) BulkSyncAps(schoolID string, aps []SyncAp) (bool, error) {
 	var (
-		results []bool
+		results []ApSyncResult
 		syncAps []SyncAp
 	)
 	for _, ap := range aps {
@@ -211,18 +216,20 @@ func (s *Service) BulkSyncAps(schoolID string, aps []SyncAp) (bool, error) {
 	if len(results) == 0 {
 		success = false
 	}
-	for _, sync := range results {
-		if !sync {
-			success = false
-			break
-		}
+	var totalProcess int
+	for _, result := range results {
+		totalProcess += result.Processed
+		totalProcess += result.Skipped
+	}
+	if totalProcess == len(aps) {
+		success = true
 	}
 	return success, nil
 }
 
 func (s *Service) GetAps(schoolID string) (GetAccessPointsResp, error) {
 	var gaps GetAccessPointsResp
-	req, err := s.generateRequest(fmt.Sprintf("/schools/%s/access_points", schoolID), "GET", nil)
+	req, err := s.generateRequest(fmt.Sprintf("/schools/%s/access_points/", schoolID), "GET", nil)
 	if err != nil {
 		return gaps, err
 	}
@@ -258,7 +265,7 @@ type SwitchesResp struct {
 
 func (s *Service) GetSwitchesBySchool(schoolID string) ([]SwitchesResp, error) {
 	var switches []SwitchesResp
-	req, err := s.generateRequest(fmt.Sprintf("/schools/%s/switches", schoolID), "GET", nil)
+	req, err := s.generateRequest(fmt.Sprintf("/schools/%s/switches/", schoolID), "GET", nil)
 	if err != nil {
 		return switches, err
 	}
@@ -312,7 +319,7 @@ type Error struct {
 func (s *Service) PostError(e Error) (bool, error) {
 	data, _ := json.Marshal(e)
 	payload := strings.NewReader(string(data))
-	req, err := s.generateRequest("/error", "POST", payload)
+	req, err := s.generateRequest("/error/", "POST", payload)
 	if err != nil {
 		return false, err
 	}
