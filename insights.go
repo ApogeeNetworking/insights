@@ -1,6 +1,7 @@
 package insights
 
 import (
+	"bytes"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -127,19 +128,19 @@ func (s *Service) GetSchool(id string) (School, error) {
 }
 
 type AccessPoint struct {
-	ID        string    `json:"id"`
+	ID        string    `json:"id,omitempty"`
 	Name      string    `json:"name"`
-	CreatedAt time.Time `json:"created_timestamp"`
-	Serial    string    `json:"serial"`
-	Switch    string    `json:"switch"`
-	Floor     int       `json:"floor"`
-	Building  string    `json:"building"`
-	Room      string    `json:"room"`
+	CreatedAt time.Time `json:"created_timestamp,omitempty"`
+	Serial    string    `json:"serial,omitempty"`
+	Switch    string    `json:"switch,omitempty"`
+	Floor     int       `json:"floor,omitempty"`
+	Building  string    `json:"building,omitempty"`
+	Room      string    `json:"room,omitempty"`
 	Location  struct {
-		Latitude  int64 `json:"latitude"`
-		Longitude int64 `json:"longitude"`
-	} `json:"location"`
-	LastHealthCheck time.Time `json:"last_health_check_timestamp"`
+		Latitude  int64 `json:"latitude,omitempty"`
+		Longitude int64 `json:"longitude,omitempty"`
+	} `json:"location,omitempty"`
+	LastHealthCheck time.Time `json:"last_health_check_timestamp,omitempty"`
 }
 
 type GetAccessPointsResp struct {
@@ -147,6 +148,16 @@ type GetAccessPointsResp struct {
 	Meta struct {
 		NextURL string `json:"next_url"`
 	} `json:"meta"`
+}
+
+type ApPatternReq struct {
+	Name string `json:"name"`
+}
+
+type ApPatternResp struct {
+	Building string `json:"building_alias"`
+	Floor    string `json:"floor"`
+	Room     string `json:"room"`
 }
 
 type SyncAp struct {
@@ -243,6 +254,28 @@ func (s *Service) GetAps(schoolID string) (GetAccessPointsResp, error) {
 	return gaps, err
 }
 
+func (s *Service) NormalizeAp(apName string) (ApPatternResp, error) {
+	apPat := ApPatternReq{Name: apName}
+	d, _ := json.Marshal(apPat)
+	payload := bytes.NewReader(d)
+	req, err := s.generateRequest("/access_points/pattern", "POST", payload)
+	if err != nil {
+		return ApPatternResp{}, err
+	}
+	res, err := s.makeRequest(req)
+	if err != nil {
+		return ApPatternResp{}, err
+	}
+	defer res.Body.Close()
+	resp := struct {
+		Data ApPatternResp `json:"data"`
+	}{}
+	if err = json.NewDecoder(res.Body).Decode(&resp); err != nil {
+		return ApPatternResp{}, err
+	}
+	return resp.Data, nil
+}
+
 type SwitchStatus struct {
 	OrgName string `json:"apogee_short_internal_name"`
 	// Options are:
@@ -330,7 +363,7 @@ func (s *Service) PostError(e Error) (bool, error) {
 	resp := struct {
 		Data bool `json:"data"`
 	}{}
-	if err = json.NewDecoder(res.Body).Decode(res.Body); err != nil {
+	if err = json.NewDecoder(res.Body).Decode(&resp); err != nil {
 		return false, err
 	}
 	return resp.Data, nil
