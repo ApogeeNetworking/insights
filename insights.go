@@ -128,19 +128,25 @@ func (s *Service) GetSchool(id string) (School, error) {
 }
 
 type AccessPoint struct {
-	ID        string    `json:"id,omitempty"`
-	Name      string    `json:"name"`
-	CreatedAt time.Time `json:"created_timestamp,omitempty"`
-	Serial    string    `json:"serial,omitempty"`
-	Switch    string    `json:"switch,omitempty"`
-	Floor     int       `json:"floor,omitempty"`
-	Building  string    `json:"building,omitempty"`
-	Room      string    `json:"room,omitempty"`
+	ID        string       `json:"id,omitempty"`
+	Name      string       `json:"name"`
+	MacAddrs  []string     `json:"mac_addresses"`
+	CreatedAt time.Time    `json:"created_timestamp,omitempty"`
+	Serial    string       `json:"serial,omitempty"`
+	Switch    SwitchesResp `json:"switch,omitempty"`
+	Floor     string       `json:"floor,omitempty"`
+	Building  Building     `json:"building,omitempty"`
+	Room      string       `json:"room,omitempty"`
 	Location  struct {
 		Latitude  int64 `json:"latitude,omitempty"`
 		Longitude int64 `json:"longitude,omitempty"`
 	} `json:"location,omitempty"`
 	LastHealthCheck time.Time `json:"last_health_check_timestamp,omitempty"`
+}
+
+type Building struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 type GetAccessPointsResp struct {
