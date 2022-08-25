@@ -311,7 +311,7 @@ func (s *Service) SendSwitchStatus(swStatus SwitchStatus) (SwitchesResp, error) 
 type Error struct {
 	Message   string `json:"message"`
 	Context   string `json:"context"`
-	ShortName string `json:"apogee_internal_short_name"`
+	ShortName string `json:"apogee_short_internal_name"`
 	Severity  string `json:"severity"`
 }
 
