@@ -37,10 +37,12 @@ func (s *Service) createReqBody(v interface{}) (*bytes.Reader, error) {
 // MakeRequest ...
 func (s *Service) makeRequest(req *http.Request) (*http.Response, error) {
 	resp, err := s.http.Do(req)
-	if err != nil {
+	switch {
+	case err != nil:
 		return resp, err
-	}
-	if resp.StatusCode == 401 {
+	case resp.StatusCode == 401:
+		return resp, errors.New(resp.Status)
+	case resp.StatusCode >= 400 && resp.StatusCode <= 599:
 		return resp, errors.New(resp.Status)
 	}
 	return resp, nil
