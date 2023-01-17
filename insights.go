@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
@@ -345,6 +346,46 @@ func (s *Service) SendSwitchStatus(swStatus SwitchStatus) (SwitchesResp, error) 
 		return statusResp, err
 	}
 	return resp.Data, nil
+}
+
+type DataPoint struct {
+	// apogee_circuit_data
+	Source     string      `json:"datasource"`
+	TimeStamp  int64       `json:"ts"`
+	Dimensions []Dimension `json:"dimensions"`
+	Measures   []Measure   `json:"measures"`
+}
+
+type Dimension struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
+type Measure struct {
+	Name    string  `json:"name"`
+	Value   float64 `json:"value"`
+	ValType string  `json:"value_type"`
+}
+
+func (s *Service) PostDatapoint(schoolID string, dp []DataPoint) error {
+	data, _ := json.Marshal(&dp)
+	payload := bytes.NewBuffer(data)
+	req, err := s.generateRequest(
+		fmt.Sprintf("/schools/%s/datapoints/", schoolID),
+		"POST",
+		payload,
+	)
+	if err != nil {
+		return err
+	}
+	res, err := s.makeRequest(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	d, _ := ioutil.ReadAll(res.Body)
+	fmt.Println(string(d))
+	return nil
 }
 
 type Error struct {
