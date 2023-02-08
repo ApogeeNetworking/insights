@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
@@ -57,7 +56,6 @@ func (s *Service) Auth() error {
 	if err = json.NewDecoder(res.Body).Decode(&authRes); err != nil {
 		return err
 	}
-	fmt.Println(authRes)
 	s.apiToken = authRes.ApiToken
 	return nil
 }
@@ -74,11 +72,11 @@ type GetSchoolResp struct {
 }
 
 type School struct {
-	ID            string    `json:"id"`
-	Name          string    `json:"name"`
-	Activated     bool      `json:"activated"`
-	ShortName     string    `json:"apogee_short_internal_name"`
-	ActivatedDate time.Time `json:"activated_timestamp"`
+	ID            string `json:"id"`
+	Name          string `json:"name"`
+	Activated     bool   `json:"activated"`
+	ShortName     string `json:"apogee_short_internal_name"`
+	ActivatedDate int64  `json:"activated_timestamp"`
 }
 
 type SchoolParams struct {
@@ -87,7 +85,7 @@ type SchoolParams struct {
 
 func (s *Service) GetSchools(p SchoolParams) ([]School, error) {
 	var resp GetSchoolsResp
-	req, err := s.generateRequest("/schools/", "GET", nil)
+	req, err := s.generateRequest("/schools", "GET", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +110,7 @@ func (s *Service) GetSchools(p SchoolParams) ([]School, error) {
 func (s *Service) GetSchool(id string) (School, error) {
 	var resp GetSchoolResp
 	req, err := s.generateRequest(
-		fmt.Sprintf("/schools/%s/", id), "GET", nil,
+		fmt.Sprintf("/schools/%s", id), "GET", nil,
 	)
 	if err != nil {
 		return School{}, err
@@ -322,6 +320,32 @@ func (s *Service) GetSwitchesBySchool(schoolID string) ([]SwitchesResp, error) {
 	return resp.Data, nil
 }
 
+type UpdateSwUptime struct {
+	SwitchName string `json:"name"`
+	Uptime     int64  `json:"uptime"`
+}
+
+func (s *Service) UpdateSwitchesUptime(schoolID string, switchesUptime []UpdateSwUptime) error {
+	d, _ := json.Marshal(&switchesUptime)
+	r := bytes.NewBuffer(d)
+	req, err := s.generateRequest(
+		fmt.Sprintf("/schools/%s/switches/", schoolID),
+		"PUT",
+		r,
+	)
+	if err != nil {
+		return err
+	}
+	res, err := s.makeRequest(req)
+	if err != nil {
+		return err
+	}
+	if res.StatusCode >= 400 && res.StatusCode <= 499 {
+		return fmt.Errorf("%s", res.Status)
+	}
+	return nil
+}
+
 func (s *Service) SendSwitchStatus(swStatus SwitchStatus) (SwitchesResp, error) {
 	var statusResp SwitchesResp
 	data, _ := json.Marshal(swStatus)
@@ -382,9 +406,9 @@ func (s *Service) PostDatapoint(schoolID string, dp []DataPoint) error {
 	if err != nil {
 		return err
 	}
-	defer res.Body.Close()
-	d, _ := ioutil.ReadAll(res.Body)
-	fmt.Println(string(d))
+	if res.StatusCode >= 400 && res.StatusCode <= 499 {
+		return fmt.Errorf("%s", res.Status)
+	}
 	return nil
 }
 
