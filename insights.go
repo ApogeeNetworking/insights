@@ -137,8 +137,8 @@ type AccessPoint struct {
 	Building  Building     `json:"building,omitempty"`
 	Room      string       `json:"room,omitempty"`
 	Location  struct {
-		Latitude  int64 `json:"latitude,omitempty"`
-		Longitude int64 `json:"longitude,omitempty"`
+		Latitude  float64 `json:"latitude,omitempty"`
+		Longitude float64 `json:"longitude,omitempty"`
 	} `json:"location,omitempty"`
 	LastHealthCheck time.Time `json:"last_health_check_timestamp,omitempty"`
 }
@@ -291,18 +291,18 @@ type SwitchStatus struct {
 }
 
 type SwitchesResp struct {
-	ID               string    `json:"id"`
-	Name             string    `json:"name"`
-	CreateAt         time.Time `json:"created_timestamp"`
-	UpdatedAt        time.Time `json:"updated_timestamp"`
-	LastHeartBeat    time.Time `json:"last_heartbeat_timestamp"`
-	Status           int       `json:"status"`
-	AccessPointCount int       `json:"number_of_access_points"`
+	ID            string `json:"id"`
+	Name          string `json:"name"`
+	CreateAt      string `json:"created_timestamp"`
+	UpdatedAt     string `json:"updated_timestamp"`
+	LastHeartBeat string `json:"last_heartbeat_timestamp"`
+	Status        int    `json:"status"`
+	Uptime        int64  `json:"uptime"`
 }
 
 func (s *Service) GetSwitchesBySchool(schoolID string) ([]SwitchesResp, error) {
 	var switches []SwitchesResp
-	req, err := s.generateRequest(fmt.Sprintf("/schools/%s/switches/", schoolID), "GET", nil)
+	req, err := s.generateRequest(fmt.Sprintf("/schools/%s/switches", schoolID), "GET", nil)
 	if err != nil {
 		return switches, err
 	}
