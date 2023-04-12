@@ -412,6 +412,32 @@ func (s *Service) PostDatapoint(schoolID string, dp []DataPoint) error {
 	return nil
 }
 
+type UserDevice struct {
+	MacAddr  string `json:"mac_address"`
+	Username string `json:"username"`
+}
+
+func (s *Service) PostDeviceMapping(schoolID string, devices []UserDevice) error {
+	d, _ := json.Marshal(&devices)
+	payload := bytes.NewBuffer(d)
+	req, err := s.generateRequest(
+		fmt.Sprintf("/schools/%s/device_mapping", schoolID),
+		"POST",
+		payload,
+	)
+	if err != nil {
+		return err
+	}
+	res, err := s.makeRequest(req)
+	if err != nil {
+		return err
+	}
+	if res.StatusCode >= 400 && res.StatusCode <= 499 {
+		return fmt.Errorf("%s", res.Status)
+	}
+	return nil
+}
+
 type Error struct {
 	Message   string `json:"message"`
 	Context   string `json:"context"`
