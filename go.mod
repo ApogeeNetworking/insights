@@ -3,7 +3,7 @@ module github.com/ApogeeNetworking/insights
 go 1.19
 
 require (
-	github.com/ApogeeNetworking/apgnet v0.7.4
+	github.com/ApogeeNetworking/apgnet v0.7.8
 	github.com/subosito/gotenv v1.4.0
 )
 
