@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -407,7 +408,8 @@ func (s *Service) PostDatapoint(schoolID string, dp []DataPoint) error {
 		return err
 	}
 	if res.StatusCode >= 400 && res.StatusCode <= 499 {
-		return fmt.Errorf("%s", res.Status)
+		d, _ := io.ReadAll(res.Body)
+		return fmt.Errorf("%s", string(d))
 	}
 	return nil
 }
