@@ -392,7 +392,7 @@ type Measure struct {
 	ValType string  `json:"value_type"`
 }
 
-func (s *Service) PostDatapoint(schoolID string, dp []DataPoint) error {
+func (s *Service) PostDatapoint(schoolID string, dp []DataPoint) (string, error) {
 	data, _ := json.Marshal(&dp)
 	payload := bytes.NewBuffer(data)
 	req, err := s.generateRequest(
@@ -401,17 +401,17 @@ func (s *Service) PostDatapoint(schoolID string, dp []DataPoint) error {
 		payload,
 	)
 	if err != nil {
-		return err
+		return "", err
 	}
 	res, err := s.makeRequest(req)
 	if err != nil {
-		return err
+		return "", err
 	}
 	if res.StatusCode >= 400 && res.StatusCode <= 499 {
 		d, _ := io.ReadAll(res.Body)
-		return fmt.Errorf("%s", string(d))
+		return string(d), fmt.Errorf("%s", err)
 	}
-	return nil
+	return "", nil
 }
 
 type UserDevice struct {
